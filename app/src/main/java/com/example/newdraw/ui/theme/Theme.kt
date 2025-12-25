@@ -9,8 +9,16 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = InkSurface,
     surface = InkSurface,
     onSurface = InkBlack,
+    onSurfaceVariant = InkBlack,
     background = InkSurface,
-    onBackground = InkBlack
+    onBackground = InkBlack,
+    error = androidx.compose.ui.graphics.Color(0xFFBA1A1A),
+    onError = androidx.compose.ui.graphics.Color.White
+).copy(
+    // Override all text colors to be black
+    onSurface = InkBlack,
+    onBackground = InkBlack,
+    onPrimary = InkBlack
 )
 
 @Composable

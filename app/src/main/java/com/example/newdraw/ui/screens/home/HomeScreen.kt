@@ -1,5 +1,6 @@
 package com.example.newdraw.ui.screens.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.newdraw.data.local.MemoryEntity
 import com.example.newdraw.ui.components.SearchBar
+import com.example.newdraw.ui.theme.InkBlack
 import com.example.newdraw.viewmodel.HomeViewModel
 import java.io.File
 
@@ -34,7 +36,7 @@ fun HomeScreen(
                 onClick = onNavigateToDraw,
                 containerColor = com.example.newdraw.ui.theme.InkPrimary
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Text("+", style = MaterialTheme.typography.headlineMedium, color = androidx.compose.ui.graphics.Color.White)
             }
         }
     ) { paddingValues ->
@@ -61,20 +63,22 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "No memories yet.",
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            color = InkBlack
                         )
                         Text(
                             text = "Tap the + button to start drawing!",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = InkBlack
                         )
                     }
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    columns = GridCells.Fixed(6),
+                    contentPadding = PaddingValues(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(memories) { memory ->
@@ -99,13 +103,27 @@ fun MemoryGridItem(
         onClick = onClick,
         modifier = modifier
             .aspectRatio(1f)
-    ) {
-        AsyncImage(
-            model = File(memory.imagePath),
-            contentDescription = memory.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            .padding(1.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent
         )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = com.example.newdraw.ui.theme.InkSurface.copy(alpha = 0.3f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp)
+                )
+        ) {
+            AsyncImage(
+                model = File(memory.imagePath),
+                contentDescription = memory.title,
+                contentScale = ContentScale.Inside,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 

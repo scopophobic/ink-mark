@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Path
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.newdraw.data.DrawingPath
 import com.example.newdraw.data.local.MemoryEntity
 import com.example.newdraw.data.repository.MemoryRepository
 import com.example.newdraw.utils.BitmapUtils
@@ -19,23 +20,37 @@ class EntryViewModel(
     private val repository: MemoryRepository,
     private val context: Context
 ) : ViewModel() {
-    val drawingPaths = mutableStateOf<List<Path>>(emptyList())
+    val drawingPaths = mutableStateOf<List<DrawingPath>>(emptyList())
     
     val title = mutableStateOf("")
     val note = mutableStateOf("")
-    val tags = mutableStateOf("")
+    val strokeWidth = mutableStateOf(4f)
 
+    private var currentPathIndex: Int = -1
     private var currentPath: Path? = null
+    var canvasWidth: Float = 512f
+    var canvasHeight: Float = 512f
     
     fun startPath(path: Path) {
         currentPath = path
-        drawingPaths.value = drawingPaths.value + path
+        val drawingPath = DrawingPath(path, strokeWidth.value)
+        drawingPaths.value = drawingPaths.value + drawingPath
+        currentPathIndex = drawingPaths.value.size - 1
     }
     
     fun updateCurrentPath(x: Float, y: Float) {
+        // Update the current path directly for real-time drawing
         currentPath?.lineTo(x, y)
-        // Force recomposition by updating the list reference
+        // Also update the stored path
+        if (currentPathIndex >= 0 && currentPathIndex < drawingPaths.value.size) {
+            drawingPaths.value[currentPathIndex].path.lineTo(x, y)
+        }
+    }
+    
+    fun triggerRecomposition() {
+        // Force recomposition by creating new list reference
         drawingPaths.value = drawingPaths.value.toList()
+        currentPath = null
     }
 
     fun undoLastPath() {
@@ -53,7 +68,9 @@ class EntryViewModel(
             try {
                 val bitmap = BitmapUtils.renderPathsToBitmap(
                     drawingPaths.value,
-                    backgroundColor = androidx.compose.ui.graphics.Color.White
+                    canvasWidth = canvasWidth,
+                    canvasHeight = canvasHeight,
+                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent
                 )
                 FileManager.saveBitmapToFile(context, bitmap)
             } catch (e: Exception) {
@@ -68,9 +85,9 @@ class EntryViewModel(
                 val imagePath = saveDrawing() ?: return@withContext false
                 
                 val memory = MemoryEntity(
-                    title = title.value,
+                    title = title.value.ifBlank { "Untitled" },
                     note = note.value,
-                    tags = tags.value,
+                    tags = "", // Tags removed
                     imagePath = imagePath,
                     createdAt = System.currentTimeMillis()
                 )
@@ -85,8 +102,10 @@ class EntryViewModel(
     fun reset() {
         title.value = ""
         note.value = ""
-        tags.value = ""
         drawingPaths.value = emptyList()
+        currentPathIndex = -1
+        canvasWidth = 512f
+        canvasHeight = 512f
     }
 }
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.newdraw.ui.theme.InkPrimary
+import com.example.newdraw.ui.theme.InkBlack
 import com.example.newdraw.viewmodel.EntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,7 +22,6 @@ fun EntryScreen(
     
     val title by viewModel.title
     val note by viewModel.note
-    val tags by viewModel.tags
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -51,8 +51,10 @@ fun EntryScreen(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = InkPrimary,
                     unfocusedBorderColor = InkPrimary.copy(alpha = 0.5f),
-                    focusedTextColor = InkPrimary,
-                    unfocusedTextColor = InkPrimary,
+                    focusedTextColor = InkBlack,
+                    unfocusedTextColor = InkBlack,
+                    focusedLabelColor = InkBlack,
+                    unfocusedLabelColor = InkBlack.copy(alpha = 0.7f),
                     cursorColor = InkPrimary
                 )
             )
@@ -70,25 +72,10 @@ fun EntryScreen(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = InkPrimary,
                     unfocusedBorderColor = InkPrimary.copy(alpha = 0.5f),
-                    focusedTextColor = InkPrimary,
-                    unfocusedTextColor = InkPrimary,
-                    cursorColor = InkPrimary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = tags,
-                onValueChange = { viewModel.tags.value = it },
-                label = { Text("Tags (comma-separated)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = InkPrimary,
-                    unfocusedBorderColor = InkPrimary.copy(alpha = 0.5f),
-                    focusedTextColor = InkPrimary,
-                    unfocusedTextColor = InkPrimary,
+                    focusedTextColor = InkBlack,
+                    unfocusedTextColor = InkBlack,
+                    focusedLabelColor = InkBlack,
+                    unfocusedLabelColor = InkBlack.copy(alpha = 0.7f),
                     cursorColor = InkPrimary
                 )
             )

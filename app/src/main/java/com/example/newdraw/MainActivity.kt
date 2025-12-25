@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -14,8 +15,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.newdraw.data.local.DatabaseProvider
 import com.example.newdraw.data.repository.MemoryRepository
+import com.example.newdraw.ui.screens.detail.DetailScreen
 import com.example.newdraw.ui.screens.draw.DrawScreen
-import com.example.newdraw.ui.screens.entry.EntryScreen
 import com.example.newdraw.ui.screens.home.HomeScreen
 import com.example.newdraw.ui.theme.NewdrawTheme
 import com.example.newdraw.viewmodel.EntryViewModel
@@ -57,28 +58,13 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("draw")
                                 },
                                 onNavigateToEntry = { memoryId ->
-                                    // For now, just navigate to draw
-                                    // Entry detail view can be added later
-                                    entryViewModel.reset()
-                                    navController.navigate("draw")
+                                    navController.navigate("detail/$memoryId")
                                 }
                             )
                         }
                         
                         composable("draw") {
                             DrawScreen(
-                                viewModel = entryViewModel,
-                                onNext = {
-                                    navController.navigate("entry")
-                                },
-                                onBack = {
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
-                        
-                        composable("entry") {
-                            EntryScreen(
                                 viewModel = entryViewModel,
                                 onSave = {
                                     navController.popBackStack("home", inclusive = false)
@@ -87,6 +73,26 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 }
                             )
+                        }
+                        
+                        composable("detail/{memoryId}") { backStackEntry ->
+                            val memoryId = backStackEntry.arguments?.getString("memoryId")?.toIntOrNull()
+                            var memory by remember { mutableStateOf<com.example.newdraw.data.local.MemoryEntity?>(null) }
+                            
+                            LaunchedEffect(memoryId) {
+                                if (memoryId != null) {
+                                    memory = repository.getMemoryById(memoryId)
+                                }
+                            }
+                            
+                            memory?.let { mem ->
+                                DetailScreen(
+                                    memory = mem,
+                                    onBack = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
                         }
                     }
                 }

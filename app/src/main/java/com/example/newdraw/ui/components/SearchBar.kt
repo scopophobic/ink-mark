@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.newdraw.ui.theme.InkPrimary
+import com.example.newdraw.ui.theme.InkBlack
 import com.example.newdraw.ui.theme.InkSurface
 
 @Composable
@@ -24,13 +25,17 @@ fun SearchBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text("Search by title, tags, or date...") },
+        placeholder = { Text("Search by title, tags, or date...", color = InkBlack.copy(alpha = 0.6f)) },
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = InkPrimary,
             unfocusedBorderColor = InkPrimary.copy(alpha = 0.5f),
-            focusedTextColor = InkPrimary,
-            unfocusedTextColor = InkPrimary,
+            focusedTextColor = InkBlack,
+            unfocusedTextColor = InkBlack,
+            unfocusedPlaceholderColor = InkBlack.copy(alpha = 0.6f),
+            focusedPlaceholderColor = InkBlack.copy(alpha = 0.6f),
+            focusedLabelColor = InkBlack,
+            unfocusedLabelColor = InkBlack.copy(alpha = 0.7f),
             cursorColor = InkPrimary
         ),
         singleLine = true
