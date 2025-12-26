@@ -24,6 +24,10 @@ class MemoryRepository(
     suspend fun getMemoryById(id: Int): MemoryEntity? {
         return memoryDao.getMemoryById(id)
     }
+    
+    suspend fun updateStarred(id: Int, starred: Boolean) {
+        memoryDao.updateStarred(id, starred)
+    }
 }
 
 

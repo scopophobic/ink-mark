@@ -28,5 +28,9 @@ class HomeViewModel(
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
     }
+    
+    suspend fun toggleStarred(memoryId: Int, isStarred: Boolean) {
+        repository.updateStarred(memoryId, isStarred)
+    }
 }
 

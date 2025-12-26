@@ -8,10 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.newdraw.ui.components.DrawingCanvas
 import com.example.newdraw.ui.theme.InkPrimary
 import com.example.newdraw.ui.theme.InkBlack
+import com.example.newdraw.ui.theme.CreamWhite
 import com.example.newdraw.viewmodel.EntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,7 +74,7 @@ fun DrawScreen(
                 Slider(
                     value = strokeWidth,
                     onValueChange = { viewModel.strokeWidth.value = it },
-                    valueRange = 2f..20f,
+                    valueRange = 5f..15f,
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = InkPrimary,
@@ -109,24 +111,35 @@ fun DrawScreen(
                 )
             }
 
-            // Memory input below drawing box
+            // Memory input below drawing box - cream white background with purple text
             OutlinedTextField(
                 value = note,
                 onValueChange = { viewModel.note.value = it },
-                label = { Text("Add a memory...", color = InkBlack) },
+                label = { 
+                    Text(
+                        "Add a memory...", 
+                        color = InkPrimary,
+                        style = MaterialTheme.typography.bodyMedium
+                    ) 
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = InkPrimary
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = InkPrimary,
                     unfocusedBorderColor = InkPrimary.copy(alpha = 0.5f),
-                    focusedTextColor = InkBlack,
-                    unfocusedTextColor = InkBlack,
-                    unfocusedPlaceholderColor = InkBlack.copy(alpha = 0.6f),
-                    focusedPlaceholderColor = InkBlack.copy(alpha = 0.6f),
-                    focusedLabelColor = InkBlack,
-                    unfocusedLabelColor = InkBlack.copy(alpha = 0.7f),
-                    cursorColor = InkPrimary
+                    focusedTextColor = InkPrimary,
+                    unfocusedTextColor = InkPrimary,
+                    unfocusedPlaceholderColor = InkPrimary.copy(alpha = 0.6f),
+                    focusedPlaceholderColor = InkPrimary.copy(alpha = 0.6f),
+                    focusedLabelColor = InkPrimary,
+                    unfocusedLabelColor = InkPrimary.copy(alpha = 0.7f),
+                    cursorColor = InkPrimary,
+                    focusedContainerColor = CreamWhite,
+                    unfocusedContainerColor = CreamWhite
                 )
             )
 

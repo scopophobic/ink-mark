@@ -24,6 +24,9 @@ interface MemoryDao {
 
     @Query("SELECT * FROM memory_table WHERE id = :id")
     suspend fun getMemoryById(id: Int): MemoryEntity?
+    
+    @Query("UPDATE memory_table SET starred = :starred WHERE id = :id")
+    suspend fun updateStarred(id: Int, starred: Boolean)
 }
 
 

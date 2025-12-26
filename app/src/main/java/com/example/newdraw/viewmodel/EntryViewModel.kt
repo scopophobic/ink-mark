@@ -24,7 +24,7 @@ class EntryViewModel(
     
     val title = mutableStateOf("")
     val note = mutableStateOf("")
-    val strokeWidth = mutableStateOf(4f)
+    val strokeWidth = mutableStateOf(8f)
 
     private var currentPathIndex: Int = -1
     private var currentPath: Path? = null

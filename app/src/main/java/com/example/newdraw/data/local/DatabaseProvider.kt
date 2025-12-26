@@ -11,7 +11,9 @@ object DatabaseProvider {
             context.applicationContext,
             MemoryDatabase::class.java,
             "memory_database"
-        ).build().also {
+        )
+        .fallbackToDestructiveMigration() // Recreate database on version change
+        .build().also {
             database = it
         }
     }

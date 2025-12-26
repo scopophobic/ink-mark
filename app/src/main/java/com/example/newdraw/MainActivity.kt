@@ -86,10 +86,19 @@ class MainActivity : ComponentActivity() {
                             }
                             
                             memory?.let { mem ->
+                                val homeViewModel: HomeViewModel = viewModel {
+                                    HomeViewModel(repository)
+                                }
                                 DetailScreen(
                                     memory = mem,
+                                    viewModel = homeViewModel,
                                     onBack = {
                                         navController.popBackStack()
+                                    },
+                                    onNavigateToMemory = { memoryId ->
+                                        navController.navigate("detail/$memoryId") {
+                                            popUpTo("detail/${mem.id}") { inclusive = true }
+                                        }
                                     }
                                 )
                             }

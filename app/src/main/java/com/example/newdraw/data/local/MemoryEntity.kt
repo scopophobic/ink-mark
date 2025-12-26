@@ -11,7 +11,8 @@ data class MemoryEntity(
     val note: String,
     val tags: String,
     val imagePath: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val starred: Boolean = false
 )
 
 
