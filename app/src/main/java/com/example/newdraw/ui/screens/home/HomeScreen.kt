@@ -1,18 +1,13 @@
 package com.example.newdraw.ui.screens.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.ui.draw.shadow
 import com.example.newdraw.ui.components.FlowerIcon
 import com.example.newdraw.ui.components.MushroomIcon
@@ -22,25 +17,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
-import kotlinx.coroutines.launch
 import com.example.newdraw.data.local.MemoryEntity
 import com.example.newdraw.ui.theme.InkBlack
 import com.example.newdraw.ui.theme.InkPrimary
-import com.example.newdraw.ui.theme.InkSurface
-import com.example.newdraw.ui.theme.CreamWhite
 import com.example.newdraw.viewmodel.HomeViewModel
 import java.io.File
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,25 +43,39 @@ fun HomeScreen(
 ) {
     val memories by viewModel.memories.collectAsStateWithLifecycle()
     
-    // Create a map of day index to memory for quick lookup
-    // Prefer starred memories when multiple exist for the same day
-    val memoryMap = remember(memories) {
-        memories.groupBy { memory ->
-            // Calculate day of year from timestamp
-            val calendar = java.util.Calendar.getInstance().apply {
-                timeInMillis = memory.createdAt
-            }
-            calendar.get(java.util.Calendar.DAY_OF_YEAR) - 1
-        }.mapValues { (_, memoriesForDay) ->
-            // If multiple memories for same day, prefer starred one, otherwise most recent
-            memoriesForDay.sortedWith(
-                compareByDescending<MemoryEntity> { it.starred }
-                    .thenByDescending { it.createdAt }
-            ).first()
-        }
+    // Get current year for consistent date calculation
+    val currentYear = remember {
+        java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
     }
     
-    var showingDateForDay by remember { mutableStateOf<Int?>(null) }
+    // Create a map of day index to memory for quick lookup
+    // Only include memories from the current year to ensure date consistency
+    // Prefer starred memories when multiple exist for the same day
+    val memoryMap = remember(memories, currentYear) {
+        memories
+            .filter { memory ->
+                // Only include memories from the current year
+                val calendar = java.util.Calendar.getInstance().apply {
+                    timeInMillis = memory.createdAt
+                }
+                calendar.get(java.util.Calendar.YEAR) == currentYear
+            }
+            .groupBy { memory ->
+                // Calculate day of year from timestamp (0-364)
+                val calendar = java.util.Calendar.getInstance().apply {
+                    timeInMillis = memory.createdAt
+                }
+                calendar.get(java.util.Calendar.DAY_OF_YEAR) - 1
+            }
+            .mapValues { (_, memoriesForDay) ->
+                // If multiple memories for same day, prefer starred one, otherwise most recent
+                memoriesForDay.sortedWith(
+                    compareByDescending<MemoryEntity> { it.starred }
+                        .thenByDescending { it.createdAt }
+                ).first()
+            }
+    }
+    
     var isGridView by remember { mutableStateOf(true) } // true = grid view, false = create memory
 
     Scaffold(
@@ -145,23 +150,17 @@ fun HomeScreen(
                 if (isGridView) {
                     // Main grid - shows only images for days with memories
                     YearGrid(
-                    memoryMap = memoryMap,
-                    showingDateForDay = showingDateForDay,
-                    onFirstTap = { dayIndex ->
-                        // First tap: show date
-                        showingDateForDay = dayIndex
-                    },
-                    onSecondTap = { dayIndex ->
-                        // Second tap: navigate to detail view
-                        showingDateForDay = null
-                        memoryMap[dayIndex]?.let { memory ->
-                            onNavigateToEntry(memory.id)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        memoryMap = memoryMap,
+                        onTap = { dayIndex ->
+                            // Navigate to detail view
+                            memoryMap[dayIndex]?.let { memory ->
+                                onNavigateToEntry(memory.id)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     )
                 } else {
                     // Create memory view - navigate to draw screen
@@ -178,45 +177,22 @@ fun HomeScreen(
 @Composable
 fun YearGrid(
     memoryMap: Map<Int, MemoryEntity>,
-    showingDateForDay: Int?,
-    onFirstTap: (Int) -> Unit,
-    onSecondTap: (Int) -> Unit,
+    onTap: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 365 days in a year, arranged in a grid
     // 16 columns
     val columns = 16
     
-    // Helper to format date from memory's actual creation date
-    fun getDateForMemory(memory: MemoryEntity): String {
-        try {
-            val calendar = java.util.Calendar.getInstance().apply {
-                timeInMillis = memory.createdAt
-            }
-            val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
-            val month = calendar.get(java.util.Calendar.MONTH)
-            val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
-            
-            val dayNames = arrayOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-            val monthNames = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-            
-            return "${dayNames[dayOfWeek - 1]}, ${monthNames[month]} $day"
-        } catch (e: Exception) {
-            return "Date"
-        }
-    }
-    
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = modifier,
-        contentPadding = PaddingValues(1.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.5.dp),
-        verticalArrangement = Arrangement.spacedBy(0.5.dp)
+        contentPadding = PaddingValues(0.dp),
+        horizontalArrangement = Arrangement.spacedBy((-2).dp), // Negative spacing for overlap
+        verticalArrangement = Arrangement.spacedBy((-2).dp) // Negative spacing for overlap
     ) {
         itemsIndexed((0 until 365).toList()) { index, dayIndex ->
             val hasMemory = memoryMap.containsKey(dayIndex)
-            val isShowingDate = showingDateForDay == dayIndex
             
             if (hasMemory) {
                 // Show image for days with memories
@@ -224,58 +200,38 @@ fun YearGrid(
                     Box(
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .pointerInput(dayIndex, isShowingDate) {
+                            .pointerInput(dayIndex) {
                                 detectTapGestures {
-                                    if (isShowingDate) {
-                                        // Second tap: open detail
-                                        onSecondTap(dayIndex)
-                                    } else {
-                                        // First tap: show date
-                                        onFirstTap(dayIndex)
-                                    }
+                                    // Tap: navigate to detail view
+                                    onTap(dayIndex)
                                 }
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Image - bigger and more visible, no border
+                        // Image - enhanced for better visibility in grid
+                        // Use ColorFilter to increase contrast and make it bolder
+                        val colorMatrix = remember {
+                            // Much higher contrast for bold, raw aesthetic
+                            // Contrast: 1.8 = 80% more contrast for very bold lines
+                            val contrast = 1.8f
+                            val brightness = -0.15f // Darker for more visibility
+                            ColorMatrix(floatArrayOf(
+                                contrast, 0f, 0f, 0f, brightness,
+                                0f, contrast, 0f, 0f, brightness,
+                                0f, 0f, contrast, 0f, brightness,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                        }
+                        
                         AsyncImage(
                             model = File(memory.imagePath),
                             contentDescription = null,
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.Crop, // Crop to fill more space
+                            colorFilter = ColorFilter.colorMatrix(colorMatrix),
                             modifier = Modifier
                                 .fillMaxSize()
+                                .scale(1.5f) // Scale up 50% to make bigger and overlap
                         )
-                        
-                        // Date tooltip above image when showing - wider and properly sized
-                        if (isShowingDate) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = CreamWhite,
-                                    modifier = Modifier
-                                        .align(Alignment.TopCenter)
-                                        .offset(y = (-36).dp)
-                                        .widthIn(min = 120.dp)
-                                        .border(
-                                            width = 1.dp,
-                                            color = InkPrimary.copy(alpha = 0.3f),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                ) {
-                                    Text(
-                                        text = getDateForMemory(memory),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = InkPrimary,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             } else {

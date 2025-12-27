@@ -50,10 +50,38 @@ fun DetailScreen(
     val dateString = dateFormat.format(Date(currentMemory.createdAt))
     var dragOffset by remember { mutableStateOf(0f) }
     
-    // Get all memories for swipe navigation
+    // Get all memories and filter to same day
     val allMemories by viewModel.memories.collectAsStateWithLifecycle()
-    val currentIndex = remember(allMemories, currentMemory) {
-        allMemories.indexOfFirst { it.id == currentMemory.id }.takeIf { it >= 0 } ?: 0
+    
+    // Calculate the day of year and year for the current memory
+    val currentMemoryDay = remember(currentMemory) {
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = currentMemory.createdAt
+        }
+        calendar.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+    
+    val currentMemoryYear = remember(currentMemory) {
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = currentMemory.createdAt
+        }
+        calendar.get(java.util.Calendar.YEAR)
+    }
+    
+    // Filter memories to only those from the same day and year
+    val sameDayMemories = remember(allMemories, currentMemoryDay, currentMemoryYear) {
+        allMemories.filter { memory ->
+            val calendar = java.util.Calendar.getInstance().apply {
+                timeInMillis = memory.createdAt
+            }
+            val memoryDay = calendar.get(java.util.Calendar.DAY_OF_YEAR)
+            val memoryYear = calendar.get(java.util.Calendar.YEAR)
+            memoryDay == currentMemoryDay && memoryYear == currentMemoryYear
+        }.sortedByDescending { it.createdAt }
+    }
+    
+    val currentIndex = remember(sameDayMemories, currentMemory) {
+        sameDayMemories.indexOfFirst { it.id == currentMemory.id }.takeIf { it >= 0 } ?: 0
     }
 
     Scaffold(
@@ -93,17 +121,17 @@ fun DetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .pointerInput(currentIndex) {
+                .pointerInput(currentIndex, sameDayMemories.size) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             if (abs(dragOffset) > 100f) {
                                 if (dragOffset > 0 && currentIndex > 0) {
-                                    // Swipe right - previous memory
-                                    val prevMemory = allMemories[currentIndex - 1]
+                                    // Swipe right - previous memory from same day
+                                    val prevMemory = sameDayMemories[currentIndex - 1]
                                     onNavigateToMemory(prevMemory.id)
-                                } else if (dragOffset < 0 && currentIndex < allMemories.size - 1) {
-                                    // Swipe left - next memory
-                                    val nextMemory = allMemories[currentIndex + 1]
+                                } else if (dragOffset < 0 && currentIndex < sameDayMemories.size - 1) {
+                                    // Swipe left - next memory from same day
+                                    val nextMemory = sameDayMemories[currentIndex + 1]
                                     onNavigateToMemory(nextMemory.id)
                                 }
                             }
